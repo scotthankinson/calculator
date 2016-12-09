@@ -9,3 +9,13 @@ Serverless
 Mocha
 
 Istanbul
+
+
+
+*Usage:*
+
+npm install -- pull down all the stuff we ignored
+
+npm run test -- transpile and run unit tests
+
+npm run cover -- generate coverage reports
