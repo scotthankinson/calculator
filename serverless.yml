@@ -1,0 +1,31 @@
+service: calculator
+
+provider:
+  name: aws
+  runtime: nodejs4.3
+
+functions:
+  add:
+    handler: out/functions/add/add.addition
+    events:
+      - http:
+          path: add
+          method: post
+  divide:
+    handler: out/functions/divide/divide.division
+    events:
+      - http:
+          path: divide
+          method: post
+  multiply:
+    handler: out/functions/multiply/multiply.multiplication
+    events:
+      - http:
+          path: multiply
+          method: post
+  subtract:
+    handler: out/functions/subtract/subtract.subtraction
+    events:
+      - http:
+          path: subtract
+          method: post
