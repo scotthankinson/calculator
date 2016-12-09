@@ -47,7 +47,8 @@ jspm_packages
 .yarn-integrity
 
 
-#Extra Directories
+#Extra Excludes
+.DS_Store
 .serverless
 typings
 out

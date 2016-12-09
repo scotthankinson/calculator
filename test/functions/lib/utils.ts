@@ -25,5 +25,12 @@ describe("Testing Utility Functions", () => {
             if (output || typeof output === "object")
                 throw new Error("Expected result of false but found " + JSON.stringify);
         });
+
+        it("should return false for non-object results", () => {
+            let input = "false";
+            let output = utils.tryParseJSON(input);
+            if (output)
+                throw new Error("Expected result of object but found " + typeof output);
+        });
     });
 });
