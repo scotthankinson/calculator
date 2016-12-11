@@ -5,9 +5,13 @@ export function createResponseObject(statusCode : number, body : any) : any
 {
   const response = {
     statusCode: statusCode,
+    headers: {
+        'Access-Control-Allow-Origin': '*'
+    },
     body: JSON.stringify(body),
   };
 
+  console.log('assembled response: ' + JSON.stringify(response));
   return response;
 };
 

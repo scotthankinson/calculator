@@ -3,9 +3,11 @@ import utils = require("../lib/utils");
 
 export function addition(event : any, context : any, callback : any) : void 
 {
+  console.log('received request: ' + event.body);
   let request = utils.tryParseJSON(event.body);
   
   if (request === false){
+    console.log('invalid request format provided');
     return callback(null, utils.createResponseObject(400, {'message': '[400] Error!  invalid request body!'}));
   }
   
@@ -19,7 +21,7 @@ export function addition(event : any, context : any, callback : any) : void
       message: 'Go Serverless v1.0! Your add function executed successfully!',
       input: request,
       output: request.a + request.b,
-    };
+  };
 
   return callback(null, utils.createResponseObject(200, response));
 };

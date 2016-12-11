@@ -11,21 +11,26 @@ functions:
       - http:
           path: add
           method: post
+          cors: true
   divide:
     handler: out/functions/divide/divide.division
     events:
       - http:
           path: divide
           method: post
+          cors: true
   multiply:
     handler: out/functions/multiply/multiply.multiplication
     events:
       - http:
           path: multiply
           method: post
+          cors: true
   subtract:
     handler: out/functions/subtract/subtract.subtraction
     events:
       - http:
           path: subtract
           method: post
+          cors: true
+          

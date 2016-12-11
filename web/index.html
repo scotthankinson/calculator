@@ -1,6 +1,8 @@
 <html>
 
 <head>
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
+        crossorigin="anonymous"></script>
     <style>
         .parent {
             position: relative;
@@ -30,7 +32,12 @@
 <body>
     <div class="parent">
         <div class="child">
-            <h3>I Am Calculon, The Great GSU Calculator!</h3>
+            <h2>I Am Calculon, The Great Calculator!</h2>
+        </div>
+    </div>
+    <div class="parent">
+        <div class="child">
+            <h4 id="status">Calculon is ready</h4>
         </div>
     </div>
     <div class="parent">
@@ -62,7 +69,7 @@
                             <br>
                             <INPUT TYPE="button" NAME="clear" VALUE="  c  " OnClick="Calc.Input.value = ''">
                             <INPUT TYPE="button" NAME="zero" VALUE="  0  " OnClick="Calc.Input.value += '0'">
-                            <INPUT TYPE="button" NAME="DoIt" VALUE="  =  " OnClick="Calc.Input.value = eval(Calc.Input.value)">
+                            <INPUT TYPE="button" NAME="DoIt" VALUE="  =  " OnClick="doTheCalc(Calc.Input.value)">
                             <INPUT TYPE="button" NAME="div" VALUE="  /  " OnClick="Calc.Input.value += ' / '">
                             <br>
                         </TD>
@@ -72,6 +79,69 @@
         </div>
     </div>
     <script>
-    
+        var thinking = false;
+        var baseUrl = "https://01276wo5ij.execute-api.us-east-1.amazonaws.com/dev/";
+
+        var doTheCalc = function(value){
+            var args = value.trim().split(' ');
+            if (args.length < 3){
+                alert('Not Enough Operands!');
+                return;
+            }
+            
+            thinking = true;
+            Calc.Input.value = ".";
+            var operand = "";
+            if (args[1] === '*'){
+                operand = "multiply";
+            } else if (args[1] === '/'){
+                operand = "divide";
+            } else if (args[1] === '+'){
+                operand = "add";
+            } else if (args[1] === '-'){
+                operand = "subtract";
+            } else {
+                thinking = false;
+                $("#status").html("Calculon is ready");
+                alert('Unknown Operand!  Resetting');
+                Calc.Input.value = '';
+                return;
+            }
+
+            $.ajax({
+                method: "POST",
+                url: baseUrl + operand, 
+                data: JSON.stringify({ a: parseInt(args[0]), b: parseInt(args[2]) }),
+                contentType: "application/json"
+            })
+            .done(function( data ) {
+                thinking = false;
+                $("#status").html("Calculon is ready");
+                Calc.Input.value = data.output;
+            })
+            .fail(function(err) {
+                alert( "error: " + JSON.stringify(err));
+                thinking = false;
+                $("#status").html("Calculon is ready");
+                Calc.Input.value = '';
+            });
+
+            return;
+        }
+
+        // Set Calculon's Thinking Hat
+        setInterval(function(){
+            if (!thinking)
+                return;
+
+            if ($("#status").html() === "Calculon is thinking..."){
+                console.log('Already thinking, add more dots');
+                Calc.Input.value = Calc.Input.value + '.';
+            } else {
+                console.log('Let\'s get thinking!');
+                $("#status").html('Calculon is thinking...');
+            }   
+        }, 250);
+
     </script>
 </body>
