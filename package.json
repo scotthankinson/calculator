@@ -13,7 +13,7 @@
     "prepublish": "tsc",
     "pretest": "tsc",
     "test": "tsc; mocha out/test/**/*",
-    "cover": " istanbul cover node_modules/.bin/_mocha -- -- -u exports -R spect out/test/**/*"
+    "cover": "tsc; istanbul cover node_modules/.bin/_mocha -- -- -u exports -R spect out/test/**/*"
   },
   "author": "",
   "license": "MIT"
