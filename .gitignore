@@ -52,4 +52,4 @@ jspm_packages
 .DS_Store
 .serverless
 typings
-/vscode
+.vscode
