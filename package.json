@@ -9,6 +9,10 @@
   "devDependencies": {
     "mocha": "^3.2.0"
   },
+  "repository": {
+    "type" : "git", 
+    "url" : "https://github.com/gsu/calculator"
+  },
   "scripts": {
     "prepublish": "tsc",
     "pretest": "tsc",
