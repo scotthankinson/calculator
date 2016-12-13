@@ -72,6 +72,10 @@
                             <INPUT TYPE="button" NAME="DoIt" VALUE="  =  " OnClick="doTheCalc(Calc.Input.value)">
                             <INPUT TYPE="button" NAME="div" VALUE="  /  " OnClick="Calc.Input.value += ' / '">
                             <br>
+                            <INPUT TYPE="button" NAME="div" VALUE=" " OnClick="return false">
+                            <INPUT TYPE="button" NAME="div" VALUE=" " OnClick="return false">
+                            <INPUT TYPE="button" NAME="abs" VALUE=" x² " OnClick="callSquare(Calc.Input.value)">
+                            <INPUT TYPE="button" NAME="abs" VALUE="ABS" OnClick="callAbs(Calc.Input.value)">
                         </TD>
                     </TR>
                 </TABLE>
@@ -80,7 +84,60 @@
     </div>
     <script>
         var thinking = false;
-        var baseUrl = "https://01276wo5ij.execute-api.us-east-1.amazonaws.com/dev/";
+        //var baseUrl = "https://01276wo5ij.execute-api.us-east-1.amazonaws.com/dev/";
+        var baseUrl = "https://9x6iryyyxc.execute-api.us-east-1.amazonaws.com/api/calculator/";
+
+        var callAbs = function(value){
+            var args = value.trim().split(' ');
+            if (args.length > 1){
+                alert('Too Many Operands!');
+                return;
+            }
+
+            $.ajax({
+                method: "POST",
+                url: baseUrl + 'abs', 
+                data: JSON.stringify({ a: parseInt(args[0]) }),
+                contentType: "application/json"
+            })
+            .done(function( data ) {
+                thinking = false;
+                $("#status").html("Calculon is ready");
+                Calc.Input.value = data.output;
+            })
+            .fail(function(err) {
+                alert( "error: " + JSON.stringify(err));
+                thinking = false;
+                $("#status").html("Calculon is ready");
+                Calc.Input.value = '';
+            });
+        }
+
+        var callSquare = function(value){
+            var args = value.trim().split(' ');
+            if (args.length > 1){
+                alert('Too Many Operands!');
+                return;
+            }
+
+            $.ajax({
+                method: "POST",
+                url: baseUrl + 'square', 
+                data: JSON.stringify({ a: parseInt(args[0]) }),
+                contentType: "application/json"
+            })
+            .done(function( data ) {
+                thinking = false;
+                $("#status").html("Calculon is ready");
+                Calc.Input.value = data.output;
+            })
+            .fail(function(err) {
+                alert( "error: " + JSON.stringify(err));
+                thinking = false;
+                $("#status").html("Calculon is ready");
+                Calc.Input.value = '';
+            });
+        }
 
         var doTheCalc = function(value){
             var args = value.trim().split(' ');

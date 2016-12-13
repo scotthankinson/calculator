@@ -26,6 +26,7 @@ coverage
 
 # Compiled binary addons (http://nodejs.org/api/addons.html)
 build/Release
+out
 
 # Dependency directories
 node_modules
@@ -51,4 +52,4 @@ jspm_packages
 .DS_Store
 .serverless
 typings
-out
+.vscode
