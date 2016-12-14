@@ -40,9 +40,9 @@ Istanbul - Static analysis tool to generate test coverage reports
 
 [npm install --g typescript mocha istanbul typings serverless] -- set up dependencies
 
-[npm install] -- pull down any missing dependencies
-
 [typings install] -- pull down any missing typescript definitions
+
+[npm install] -- pull down any missing dependencies
 
 [tsc] -- typescript compile -- makes sure everything is wired up correctly
 
