@@ -6,7 +6,21 @@
 
 *serverless.yml* describes the AWS API Gateway and Lambda structure that our functions will deploy into
 
-*Functions Folder* contains the Lambda Functions that will be deployed to AWS
+*functions Folder* contains the Lambda Functions that will be deployed to AWS
+
+*test folder* contains the unit tests and mirrors the layout of the functions folder
+
+*.serverless folder* generated folder containing deployment artifacts
+
+*coverage folder* generated folder containing Istanbul coverage reports
+
+*node_modueles folder* generated folder containing dependencies
+
+*out folder* generated folder containing transpiled code
+
+*typings folder* generated folder containing Typescript definitions files
+
+*web folder* helper folder containing the front-end code for the calculator
 
 **Technologies Incorporated:**
 
@@ -22,7 +36,7 @@ Istanbul - Static analysis tool to generate test coverage reports
 
 
 
-*Usage:*
+**Usage:**
 
 [npm install --g typescript mocha istanbul typings serverless] -- set up dependencies
 
@@ -35,3 +49,4 @@ Istanbul - Static analysis tool to generate test coverage reports
 [npm run test] -- transpile and run unit tests
 
 [npm run cover] -- transpile and generate coverage reports
+
