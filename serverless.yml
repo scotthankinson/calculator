@@ -7,28 +7,28 @@ provider:
 
 functions:
   add:
-    handler: build/functions/add/add.addition
+    handler: build/src/functions/add/add.addition
     events:
       - http:
           path: add
           method: post
           cors: true
   divide:
-    handler: build/functions/divide/divide.division
+    handler: build/src/functions/divide/divide.division
     events:
       - http:
           path: divide
           method: post
           cors: true
   multiply:
-    handler: build/functions/multiply/multiply.multiplication
+    handler: build/src/functions/multiply/multiply.multiplication
     events:
       - http:
           path: multiply
           method: post
           cors: true
   subtract:
-    handler: build/functions/subtract/subtract.subtraction
+    handler: build/src/functions/subtract/subtract.subtraction
     events:
       - http:
           path: subtract

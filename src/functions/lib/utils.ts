@@ -27,3 +27,26 @@ export function tryParseJSON (jsonString : string) : any {
 
     return false;
 };
+
+export function whatDoIDo(jsonString: string) : boolean {
+    let request = tryParseJSON(jsonString);
+    let hasA = false;
+    let hasB = false;
+    
+    if (request === false)
+        return false;
+        
+    if (typeof request.a !== 'undefined'){
+        if (typeof request.a === 'number'){
+            hasA = true;
+        }
+    }
+        
+    if (typeof request.b !== 'undefined'){
+        if (typeof request.b === 'number'){
+            hasB = true;
+        }
+    }
+
+    return hasA && hasB;
+}
