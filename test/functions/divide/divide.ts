@@ -1,4 +1,4 @@
-import divide = require("../../../functions/divide/divide");
+import divide = require("../../../src/functions/divide/divide");
 
 describe("Testing Division Operator", () => {
     var callback1 = function(error: any, response: any){
