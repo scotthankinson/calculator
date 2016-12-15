@@ -1,4 +1,4 @@
-import utils = require("../../../functions/lib/utils");
+import utils = require("../../../src/functions/lib/utils");
 
 describe("Testing Utility Functions", () => {
     describe("#createResponseObject", () => {

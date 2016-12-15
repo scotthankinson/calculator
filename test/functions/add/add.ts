@@ -1,4 +1,4 @@
-import add = require("../../../functions/add/add");
+import add = require("../../../src/functions/add/add");
 
 describe("Testing Addition Operator", () => {
     var callback1 = function(error: any, response: any){

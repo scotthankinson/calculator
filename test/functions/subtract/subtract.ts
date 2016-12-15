@@ -1,4 +1,4 @@
-import subtract = require("../../../functions/subtract/subtract");
+import subtract = require("../../../src/functions/subtract/subtract");
 
 describe("Testing Subtraction Operator", () => {
     var callback1 = function(error: any, response: any){

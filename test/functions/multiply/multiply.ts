@@ -1,4 +1,4 @@
-import multiply = require("../../../functions/multiply/multiply");
+import multiply = require("../../../src/functions/multiply/multiply");
 
 describe("Testing Multiplication Operator", () => {
     var callback1 = function(error: any, response: any){
