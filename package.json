@@ -21,6 +21,8 @@
     "globals": "npm install -g serverless mocha typescript typings istanbul",
     "prestart": "tsc",
     "start": "node --debug node_modules/serverless/bin/serverless offline start",
+    "predeploy": "tsc", 
+    "deploy": "serverless deploy",
     "pretest": "tsc",
     "test": "mocha build/test/**/*",
     "precover": "tsc",
