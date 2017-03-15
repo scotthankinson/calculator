@@ -25,28 +25,28 @@ package:
 
 functions:
   add:
-    handler: build/src/functions/add/add.addition
+    handler: build/src/functions/add/handler.add
     events:
       - http:
           path: add
           method: post
           cors: true
   divide:
-    handler: build/src/functions/divide/divide.division
+    handler: build/src/functions/divide/handler.divide
     events:
       - http:
           path: divide
           method: post
           cors: true
   multiply:
-    handler: build/src/functions/multiply/multiply.multiplication
+    handler: build/src/functions/multiply/handler.multiply
     events:
       - http:
           path: multiply
           method: post
           cors: true
   subtract:
-    handler: build/src/functions/subtract/subtract.subtraction
+    handler: build/src/functions/subtract/handler.subtract
     events:
       - http:
           path: subtract

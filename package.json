@@ -3,35 +3,50 @@
   "version": "1.0.0",
   "description": "A serverless Calculator",
   "main": "handler.js",
-  "dependencies": {
-    "typescript": "^2.1.4"
-  },
-  "devDependencies": {
-    "@types/mocha": "^2.2.33",
-    "mocha": "^3.2.0",
-    "serverless": "^1.3.0",
-    "serverless-offline": "^3.5.7"
-  },
   "repository": {
     "type" : "git", 
     "url" : "https://github.com/gsu/calculator"
   },
   "scripts": {
-    "clean": "rm -rf build && rm -rf coverage &&  rm -rf .serverless",
-    "globals": "npm install -g serverless mocha typescript typings istanbul",
-    "prestart": "tsc",
+    "clean": "shx rm -rf build && shx rm -rf coverage && shx rm -rf testreports && shx rm -rf .serverless && shx rm -rf .sonar && npm install && npm run lint",
+    "lint": "tslint -c ./tslint.json 'src/**/*.ts' 'test/**/*.ts'",
+    "globals": "npm install -g serverless mocha typescript typings istanbul shx tslint",
+    "prestart": "npm run clean && tsc",
     "start": "node --debug node_modules/serverless/bin/serverless offline start",
-    "predeploy": "tsc", 
-    "deploy": "serverless deploy",
-    "pretest": "tsc",
-    "test": "mocha build/test/**/*",
-    "precover": "tsc",
-    "cover": "istanbul cover node_modules/.bin/_mocha -- -- -u exports -R spect build/test/**/*",
-    "prewinTest": "tsc",
-    "winTest": "mocha build\\test\\**\\*.js",
-    "prewinCover": "tsc",
-    "winCover": "istanbul cover node_modules\\mocha\\bin\\_mocha -- -- -u exports -R spect build\\test\\**\\*.js"
+    "predeploy": "npm run clean && tsc && npm prune --production",
+    "deploy": "sls deploy",
+    "build": "npm run clean && tsc",
+    "precover": "npm run clean && tsc",
+    "cover": "istanbul cover --include-all-sources -x 'test/**' -x 'web/**' node_modules/mocha/bin/_mocha -- --recursive --require build/test/index.js build/test",
+    "postcover": "node_modules/.bin/remap-istanbul -i coverage/coverage.json -o coverage/html -t html",
+    "pretest": "npm run clean && tsc",
+    "test": "mocha --recursive --require build/test/index.js build/test",
+    "pretestdebug": "npm run clean && tsc",
+    "testdebug": "mocha --recursive --require build/test/index.js --debug-brk build/test"
   },
-  "author": "",
-  "license": "MIT"
+  "author": "Scott Hankinson",
+  "license": "MIT",
+  "dependencies": {
+    "app-module-path": "^2.1.0",
+    "typescript": "^2.1.4",
+    "serverless-offline": "^3.5.7"
+  },
+  "devDependencies": {
+    "@types/chai": "3.4.34",
+    "@types/expect.js": "^0.3.29",
+    "@types/mocha": "^2.2.33",
+    "@types/node": "0.0.2",
+    "@types/request": "0.0.36",
+    "aws-sdk": "^2.7.13",
+    "chai": "^3.5.0",
+    "mocha": "^3.1.2",
+    "mocha-junit-reporter": "^1.12.1",
+    "mocha-sonar-reporter": "^0.1.6",
+    "remap-istanbul": "^0.8.0",
+    "serverless": "^1.3.0",
+    "tslint": "^4.1.1",
+    "tslint-microsoft-contrib": "^4.0.0",
+    "typescript": "latest",
+    "typings": "^2.0.0"
+  }
 }
