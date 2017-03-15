@@ -2,7 +2,7 @@ import multiply = require("../../../src/functions/multiply/multiply");
 
 describe("Testing Multiplication Operator", () => {
     var callback1 = function(error: any, response: any){
-        if (typeof error === 'null')
+        if (error !== null)
             throw new Error("Expected no errors but found " + error);
     };
     var callback2 = function(error: any, response: any){

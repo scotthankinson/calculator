@@ -2,7 +2,7 @@ import add = require("../../../src/functions/add/add");
 
 describe("Testing Addition Operator", () => {
     var callback1 = function(error: any, response: any){
-        if (typeof error === 'null')
+        if (error !== null)
             throw new Error("Expected no errors but found " + error);
     };
     var callback3 = function(error: any, response: any){

@@ -2,7 +2,7 @@ import subtract = require("../../../src/functions/subtract/subtract");
 
 describe("Testing Subtraction Operator", () => {
     var callback1 = function(error: any, response: any){
-        if (typeof error === 'null')
+        if (error !== null)
             throw new Error("Expected no errors but found " + error);
     };
     var callback2 = function(error: any, response: any){

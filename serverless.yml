@@ -5,6 +5,24 @@ provider:
   runtime: nodejs4.3
   role: arn:aws:iam::616103791264:role/lambda_basic_execution
 
+package:
+  exclude:
+    - web/**
+    - tests/**
+    - .git/**
+    - coverage/**
+    - .sonar/**
+    - src/**
+    - node_modules/@types/**
+    - build/**/*.js.map
+    - build/test/**
+    - tsconfig.json
+    - .env
+    - .gitignore
+    - .npmignore
+    - event.json
+    - README.md
+
 functions:
   add:
     handler: build/src/functions/add/add.addition

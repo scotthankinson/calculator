@@ -2,7 +2,7 @@ import divide = require("../../../src/functions/divide/divide");
 
 describe("Testing Division Operator", () => {
     var callback1 = function(error: any, response: any){
-        if (typeof error === 'null')
+        if (error !== null)
             throw new Error("Expected no errors but found " + error);
     };
     var callback2 = function(error: any, response: any){
@@ -18,8 +18,8 @@ describe("Testing Division Operator", () => {
         let result = JSON.parse(response.body);
         if (response.statusCode !== 400)
             throw new Error("Invalid JSON passed, expected status 400, found: "+response.statusCode);
-        if (result.message !== '[400] Error!  Invalid Request Body!')
-            throw new Error("Expected output: "+'[400] Error!  Invalid Request Body!'+'/n returned output: '+result.message);
+        if (result.message !== '[400] Error! Invalid Request Body!')
+            throw new Error("Expected output: "+'[400] Error! Invalid Request Body!'+'/n returned output: '+result.message);
 
     };
 
@@ -30,6 +30,15 @@ describe("Testing Division Operator", () => {
         if (result.message !== '[400] Error! a and be must be numbers!')
             throw new Error("Expected response message of [400] Error! a and be must be numbers! but found " + response.message);
     };
+
+    let callback6 = (error: any, response: any) => {
+        if (response.statusCode != 400)
+            throw new Error("Expected status code of 400 but found " + response.statusCode);
+        
+        let result = JSON.parse(response.body);
+        if (result.message !== '[400] Error!  invalid request body!')
+            throw new Error("Expected json parse error but found " + result.message);
+    }
 
     describe("#division", () => {
         it ("should not return an error", () => {
@@ -56,6 +65,9 @@ describe("Testing Division Operator", () => {
             divide.division({body: "{\"a\": 1, \"b\": \"waffels\"}"}, null, callback5);
         });
 
+        it("should return an error if body is not valid JSON", () => {
+            divide.division({body: "3"}, null, callback6);
+        })
     });
 
 });

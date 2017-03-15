@@ -1,9 +1,58 @@
 <html>
 
 <head>
+    <meta charset="utf-8">
+
+    <title>Calculon</title>
+
+    <meta name="description" content="A demo calculator using serverless architecture">
+    <meta name="author" content="Scott Hankinson">
+
     <script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
         crossorigin="anonymous"></script>
     <style>
+        .blue {
+            background: -moz-linear-gradient(top, rgba(30,87,153,1) 0%, rgba(125,185,232,0) 100%); /* FF3.6-15 */
+            background: -webkit-linear-gradient(top, rgba(30,87,153,1) 0%,rgba(125,185,232,0) 100%); /* Chrome10-25,Safari5.1-6 */
+            background: linear-gradient(to bottom, rgba(30,87,153,1) 0%,rgba(125,185,232,0) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+            filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#1e5799', endColorstr='#007db9e8',GradientType=0 ); /* IE6-9 */
+        }
+
+        .green {
+            background: -moz-linear-gradient(top, rgba(86,154,30,1) 0%, rgba(147,202,90,1) 62%, rgba(153,207,96,0.7) 68%, rgba(184,232,126,0) 100%); /* FF3.6-15 */
+            background: -webkit-linear-gradient(top, rgba(86,154,30,1) 0%,rgba(147,202,90,1) 62%,rgba(153,207,96,0.7) 68%,rgba(184,232,126,0) 100%); /* Chrome10-25,Safari5.1-6 */
+            background: linear-gradient(to bottom, rgba(86,154,30,1) 0%,rgba(147,202,90,1) 62%,rgba(153,207,96,0.7) 68%,rgba(184,232,126,0) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+            filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#569a1e', endColorstr='#00b8e87e',GradientType=0 ); /* IE6-9 */
+        }
+
+        .aqua {
+            background: -moz-linear-gradient(top, rgba(30,154,119,1) 0%, rgba(90,202,164,1) 62%, rgba(96,207,168,0.7) 68%, rgba(126,232,191,0) 100%); /* FF3.6-15 */
+            background: -webkit-linear-gradient(top, rgba(30,154,119,1) 0%,rgba(90,202,164,1) 62%,rgba(96,207,168,0.7) 68%,rgba(126,232,191,0) 100%); /* Chrome10-25,Safari5.1-6 */
+            background: linear-gradient(to bottom, rgba(30,154,119,1) 0%,rgba(90,202,164,1) 62%,rgba(96,207,168,0.7) 68%,rgba(126,232,191,0) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+            filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#1e9a77', endColorstr='#007ee8bf',GradientType=0 ); /* IE6-9 */
+        }
+
+        .purple {
+            background: -moz-linear-gradient(top, rgba(65,30,154,1) 0%, rgba(115,90,202,1) 62%, rgba(120,96,207,0.7) 68%, rgba(145,126,232,0) 100%); /* FF3.6-15 */
+            background: -webkit-linear-gradient(top, rgba(65,30,154,1) 0%,rgba(115,90,202,1) 62%,rgba(120,96,207,0.7) 68%,rgba(145,126,232,0) 100%); /* Chrome10-25,Safari5.1-6 */
+            background: linear-gradient(to bottom, rgba(65,30,154,1) 0%,rgba(115,90,202,1) 62%,rgba(120,96,207,0.7) 68%,rgba(145,126,232,0) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+            filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#411e9a', endColorstr='#00917ee8',GradientType=0 ); /* IE6-9 */
+        }
+
+        .red {
+            background: -moz-linear-gradient(top, rgba(154,41,30,1) 0%, rgba(202,94,91,1) 62%, rgba(207,99,97,0.7) 68%, rgba(232,126,128,0) 100%); /* FF3.6-15 */
+            background: -webkit-linear-gradient(top, rgba(154,41,30,1) 0%,rgba(202,94,91,1) 62%,rgba(207,99,97,0.7) 68%,rgba(232,126,128,0) 100%); /* Chrome10-25,Safari5.1-6 */
+            background: linear-gradient(to bottom, rgba(154,41,30,1) 0%,rgba(202,94,91,1) 62%,rgba(207,99,97,0.7) 68%,rgba(232,126,128,0) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+            filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#9a291e', endColorstr='#00e87e80',GradientType=0 ); /* IE6-9 */
+        }
+
+        body {
+            color: white;
+        }
+        table {
+            border-color: white;
+        }
+        
         .parent {
             position: relative;
             width: 100%;
@@ -29,7 +78,7 @@
     </style>
 </head>
 
-<body>
+<body class="blue">
     <div class="parent">
         <div class="child">
             <h2>I Am Calculon, The Great Calculator!</h2>
@@ -86,6 +135,11 @@
         var thinking = false;
         //var baseUrl = "https://01276wo5ij.execute-api.us-east-1.amazonaws.com/dev/";
         var baseUrl = "https://9x6iryyyxc.execute-api.us-east-1.amazonaws.com/api/calculator/";
+        var colors = [
+            'blue', 'green', 'aqua', 'purple', 'red'
+        ];
+        
+        var currentColor = 0;
 
         var callAbs = function(value){
             var args = value.trim().split(' ');
@@ -174,12 +228,14 @@
             .done(function( data ) {
                 thinking = false;
                 $("#status").html("Calculon is ready");
+                setGradient();
                 Calc.Input.value = data.output;
             })
             .fail(function(err) {
                 alert( "error: " + JSON.stringify(err));
                 thinking = false;
                 $("#status").html("Calculon is ready");
+                setGradient();
                 Calc.Input.value = '';
             });
 
@@ -199,6 +255,13 @@
                 $("#status").html('Calculon is thinking...');
             }   
         }, 250);
+
+        // Calculon loves gradients.  Pick a new one after every operation.
+        var setGradient = function(){
+            $('body').removeClass(colors[currentColor % 5]);
+            currentColor = currentColor + 1;
+            $('body').addClass(colors[currentColor % 5]);
+        };
 
     </script>
 </body>
