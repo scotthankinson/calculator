@@ -1,3 +1,6 @@
+import path = require("path");
+require("app-module-path").addPath("." + path.sep + "build");
+
 import { createResponseObject, tryParseJSON } from "src/lib/utils";
 
 export function divide(event: any, context: any, callback: any): void {

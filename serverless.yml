@@ -3,7 +3,6 @@ service: calculator
 provider:
   name: aws
   runtime: nodejs4.3
-  role: arn:aws:iam::616103791264:role/lambda_basic_execution
 
 package:
   exclude:
