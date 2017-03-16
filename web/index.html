@@ -8,47 +8,16 @@
     <meta name="description" content="A demo calculator using serverless architecture">
     <meta name="author" content="Scott Hankinson">
 
-    <script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
-        crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="math.js"></script>
+    
     <style>
-        .blue {
-            background: -moz-linear-gradient(top, rgba(30,87,153,1) 0%, rgba(125,185,232,0) 100%); /* FF3.6-15 */
-            background: -webkit-linear-gradient(top, rgba(30,87,153,1) 0%,rgba(125,185,232,0) 100%); /* Chrome10-25,Safari5.1-6 */
-            background: linear-gradient(to bottom, rgba(30,87,153,1) 0%,rgba(125,185,232,0) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
-            filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#1e5799', endColorstr='#007db9e8',GradientType=0 ); /* IE6-9 */
-        }
-
-        .green {
-            background: -moz-linear-gradient(top, rgba(86,154,30,1) 0%, rgba(147,202,90,1) 62%, rgba(153,207,96,0.7) 68%, rgba(184,232,126,0) 100%); /* FF3.6-15 */
-            background: -webkit-linear-gradient(top, rgba(86,154,30,1) 0%,rgba(147,202,90,1) 62%,rgba(153,207,96,0.7) 68%,rgba(184,232,126,0) 100%); /* Chrome10-25,Safari5.1-6 */
-            background: linear-gradient(to bottom, rgba(86,154,30,1) 0%,rgba(147,202,90,1) 62%,rgba(153,207,96,0.7) 68%,rgba(184,232,126,0) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
-            filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#569a1e', endColorstr='#00b8e87e',GradientType=0 ); /* IE6-9 */
-        }
-
-        .aqua {
-            background: -moz-linear-gradient(top, rgba(30,154,119,1) 0%, rgba(90,202,164,1) 62%, rgba(96,207,168,0.7) 68%, rgba(126,232,191,0) 100%); /* FF3.6-15 */
-            background: -webkit-linear-gradient(top, rgba(30,154,119,1) 0%,rgba(90,202,164,1) 62%,rgba(96,207,168,0.7) 68%,rgba(126,232,191,0) 100%); /* Chrome10-25,Safari5.1-6 */
-            background: linear-gradient(to bottom, rgba(30,154,119,1) 0%,rgba(90,202,164,1) 62%,rgba(96,207,168,0.7) 68%,rgba(126,232,191,0) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
-            filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#1e9a77', endColorstr='#007ee8bf',GradientType=0 ); /* IE6-9 */
-        }
-
-        .purple {
-            background: -moz-linear-gradient(top, rgba(65,30,154,1) 0%, rgba(115,90,202,1) 62%, rgba(120,96,207,0.7) 68%, rgba(145,126,232,0) 100%); /* FF3.6-15 */
-            background: -webkit-linear-gradient(top, rgba(65,30,154,1) 0%,rgba(115,90,202,1) 62%,rgba(120,96,207,0.7) 68%,rgba(145,126,232,0) 100%); /* Chrome10-25,Safari5.1-6 */
-            background: linear-gradient(to bottom, rgba(65,30,154,1) 0%,rgba(115,90,202,1) 62%,rgba(120,96,207,0.7) 68%,rgba(145,126,232,0) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
-            filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#411e9a', endColorstr='#00917ee8',GradientType=0 ); /* IE6-9 */
-        }
-
-        .red {
-            background: -moz-linear-gradient(top, rgba(154,41,30,1) 0%, rgba(202,94,91,1) 62%, rgba(207,99,97,0.7) 68%, rgba(232,126,128,0) 100%); /* FF3.6-15 */
-            background: -webkit-linear-gradient(top, rgba(154,41,30,1) 0%,rgba(202,94,91,1) 62%,rgba(207,99,97,0.7) 68%,rgba(232,126,128,0) 100%); /* Chrome10-25,Safari5.1-6 */
-            background: linear-gradient(to bottom, rgba(154,41,30,1) 0%,rgba(202,94,91,1) 62%,rgba(207,99,97,0.7) 68%,rgba(232,126,128,0) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
-            filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#9a291e', endColorstr='#00e87e80',GradientType=0 ); /* IE6-9 */
-        }
 
         body {
             color: white;
+            background-color: blue;
         }
+
         table {
             border-color: white;
         }
@@ -57,6 +26,7 @@
             position: relative;
             width: 100%;
             height: 100px;
+            z-index: 10;
         }
         
         .child {
@@ -75,10 +45,25 @@
             width: 160px;
             margin-left: 8px;
         }
+
+        #canvas {
+            position: absolute;
+            overflow: hidden;
+            margin: -8px -8px;
+            padding: 0px 0px;
+            /*
+            // Lazer stripe?
+            -webkit-transform: rotate(120deg); 
+            -moz-transform:    rotate(120deg); 
+            -ms-transform:     rotate(120deg); 
+            -o-transform:      rotate(120deg);  
+            */
+        }
     </style>
 </head>
 
-<body class="blue">
+<body onload="setGradient()">
+    <canvas id="canvas" width="200%" height="200%"></canvas>
     <div class="parent">
         <div class="child">
             <h2>I Am Calculon, The Great Calculator!</h2>
@@ -89,6 +74,8 @@
             <h4 id="status">Calculon is ready</h4>
         </div>
     </div>
+    <br/>
+    <br/>
     <div class="parent">
         <div class="child">
             <FORM NAME="Calc">
@@ -136,12 +123,6 @@
     <script>
         var thinking = false;
         var baseUrl = "https://api-dev.slalom-serverless-demo.com/calculator/";
-        
-        var colors = [
-            'blue', 'green', 'aqua', 'purple', 'red'
-        ];
-        
-        var currentColor = 0;
 
         var callAbs = function(value){
             var args = value.trim().split(' ');
@@ -258,12 +239,57 @@
             }   
         }, 250);
 
+        var offset = 0;
+
         // Calculon loves gradients.  Pick a new one after every operation.
-        var setGradient = function(){
-            $('body').removeClass(colors[currentColor % 5]);
-            currentColor = currentColor + 1;
-            $('body').addClass(colors[currentColor % 5]);
-        };
+        function setGradient() {
+            offset = offset + 1;
+            //offset = Math.floor(Math.random() * 9);
+            var canvas = document.getElementById("canvas");
+            canvas.width  = window.innerWidth;
+            canvas.height = window.innerHeight;
+            var halfWidth = canvas.width / 2;
+            var halfHeight = canvas.height / 2.5;
+            var gradientCenter = new Point(halfWidth, halfHeight);
+            var colors = [ [1, 0, 0, 1], // red
+                [.9, .1, 0, 1],
+                [.8, .2, 0, 1],
+                [.1, .9, 0, 1],
+                [0, 1, 0, 1], // green
+                [0, .9, .1, 1],
+                [0, .2, .8, 1],
+                [0, .1, .9, 1],
+                [0, 0, 1, 1] // blue
+            ];
+            
+            var angularGradient = function(point) {
+
+                // figure out angle
+                var dir = point.sub(gradientCenter);
+                var angle = Math.atan2(dir.y, dir.x);
+
+                // wrap around as positive
+                if (dir.y < 0 ) {
+                    angle += 2 * Math.PI;
+                }
+
+                // map to [0, 1] range
+                angle /= (2 * Math.PI);
+                // figure out which segments to interpolate
+                var angleRatio = angle * colors.length;
+                var index = Math.floor(angleRatio);
+                var leftIndex = index == 0 ? colors.length - 1 : index - 1;
+                var rightIndex = index;
+                leftIndex = (leftIndex + offset) % colors.length;
+                rightIndex = (rightIndex + offset) % colors.length;
+                var leftColor = colors[leftIndex];
+                var rightColor = colors[rightIndex];
+                // figure out interpolation factor
+                var lerpFac = angleRatio % 1;
+                return lerp(leftColor, rightColor, lerpFac);
+            }
+            process(canvas, angularGradient);
+        }
 
     </script>
 </body>
