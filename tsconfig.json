@@ -11,10 +11,7 @@
         "declaration": true,
         "types": [
             "mocha",
-            "expect.js",
-            "node",
-            "aws-sdk",
-            "request"
+            "node"
         ]
     },
     "exclude": [
