@@ -32,7 +32,7 @@ describe("Testing Addition Operator", () => {
 
         let result = JSON.parse(response.body);
         if (result.message !== "[400] Error!  arguments a and b must be strings!")
-            throw new Error("Expected non-number arguments to be rejected");
+            throw new Error("Expected non-string arguments to be rejected");
     };
 
     let badRequestParseErrorCallback = (error: any, response: any) => {
@@ -65,11 +65,11 @@ describe("Testing Addition Operator", () => {
             add({ body: "{\"a\": 1}" }, null, badRequestMissingArgCallback);
         });
 
-        it("should return an error if a is not a number", () => {
+        it("should return an error if a is not a string", () => {
             add({ body: "{\"a\": 1, \"b\": \"2\"}" }, null, badRequestWrongTypeCallback);
         });
 
-        it("should return an error if b is not a number", () => {
+        it("should return an error if b is not a string", () => {
             add({ body: "{\"a\": \"1\", \"b\": 2}" }, null, badRequestWrongTypeCallback);
         });
 
