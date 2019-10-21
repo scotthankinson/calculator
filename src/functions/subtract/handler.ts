@@ -19,7 +19,7 @@ export function subtract(event: any, context: any, callback: any): void {
     return callback(null, createResponseObject(400, { message: "[400] Error!  arguments a and b must be numbers!" }));
 
   const response = {
-    message: "Go Serverless v1.0! Your subtract function executed successfully!",
+    message: "Go Calculator v1.0! Your subtract function executed successfully!",
     input: request,
     output: request.a - request.b,
   };

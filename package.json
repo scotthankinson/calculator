@@ -35,7 +35,7 @@
     "@types/node": "0.0.2",
     "mocha": "^3.5.3",
     "remap-istanbul": "^0.8.0",
-    "serverless": "^1.27.3",
+    "serverless": "1.27.3",
     "tslint": "^4.1.1",
     "tslint-microsoft-contrib": "^4.0.0",
     "typescript": "latest",
