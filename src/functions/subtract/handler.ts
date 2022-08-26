@@ -1,11 +1,8 @@
-import path = require("path");
-require("app-module-path").addPath("." + path.sep + "build");
+import { createResponseObject, tryParseJSON } from "../../lib/utils";
 
-import { createResponseObject, tryParseJSON } from "src/lib/utils";
-
-export function subtract(event: any, context: any, callback: any): void {
+export function subtract(event: any, _context: any, callback: any): void {
   console.log("received request: " + event.body);
-  let request = tryParseJSON(event.body);
+  const request = tryParseJSON(event.body);
 
   if (request === false) {
     console.log("invalid request format provided");

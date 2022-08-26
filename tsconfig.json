@@ -1,22 +1,15 @@
 {
-    "compileOnSave": false,
     "compilerOptions": {
-        "module": "commonjs",
-        "noImplicitAny": true,
-        "outDir": "./build",
-        "target": "ES6",
-        "moduleResolution": "node",
-        "sourceMap": true,
-        "baseUrl": ".",
-        "declaration": true,
-        "types": [
-            "mocha",
-            "node"
-        ]
+      "allowSyntheticDefaultImports": true,
+      "esModuleInterop": true,
+      "lib": ["esnext"],
+      "module": "commonjs",
+      "moduleResolution": "node",
+      "noUnusedLocals": true,
+      "noUnusedParameters": true,
+      "outDir": "lib",
+      "sourceMap": true,
+      "target": "esnext"
     },
-    "exclude": [
-        "node_modules",
-        "build",
-        "web"
-    ]
-}
+    "exclude": ["node_modules"]
+  }

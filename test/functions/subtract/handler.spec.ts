@@ -1,44 +1,45 @@
-import { subtract } from "src/functions/subtract/handler";
+import { subtract } from "../../../src/functions/subtract/handler";
 
 describe("Testing Subtraction Operator", () => {
-    let callback1 = function (error: any, response: any) {
+    const callback1 = (error: any, _response: any) => {
         if (error !== null)
             throw new Error("Expected no errors but found " + error);
     };
 
-    let callback3 = function (error: any, response: any) {
+    const callback3 = (_error: any, response: any) => {
         if (response.statusCode !== 200)
             throw new Error("Expected status code of 200 but found " + response.statusCode);
     };
-    let callback2 = function (error: any, response: any) {
-        let result = JSON.parse(response.body);
+
+    const callback2 = (_error: any, response: any) => {
+        const result = JSON.parse(response.body);
         if (result.output !== 8)
             throw new Error("Expected output of 8 but found " + result.output);
     };
 
-    let callback4 = function (error: any, response: any) {
+    const callback4 = (_error: any, response: any) => {
         if (response.statusCode !== 400)
             throw new Error("Expected status code of 400 but found " + response.statusCode);
 
-        let result = JSON.parse(response.body);
+        const result = JSON.parse(response.body);
         if (result.message !== "[400] Error!  arguments a and b are required!")
             throw new Error("Expected errors but found none");
     };
 
-    let callback5 = function (error: any, response: any) {
+    const callback5 = (_error: any, response: any) => {
         if (response.statusCode !== 400)
             throw new Error("Expected status code of 400 but found " + response.statusCode);
 
-        let result = JSON.parse(response.body);
+            const result = JSON.parse(response.body);
         if (result.message !== "[400] Error!  arguments a and b must be numbers!")
             throw new Error("Expected non-number arguments to be rejected");
     };
 
-    let callback6 = (error: any, response: any) => {
+    const callback6 = (_error: any, response: any) => {
         if (response.statusCode !== 400)
             throw new Error("Expected status code of 400 but found " + response.statusCode);
 
-        let result = JSON.parse(response.body);
+        const result = JSON.parse(response.body);
         if (result.message !== "[400] Error!  invalid request body!")
             throw new Error("Expected json parse error but found " + result.message);
     };

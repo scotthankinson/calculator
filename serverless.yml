@@ -1,16 +1,17 @@
 service: calculator
+frameworkVersion: '2'
 
 provider:
   name: aws
-  runtime: nodejs10.x
+  runtime: nodejs14.x
+  environment:
+    CUSTOM_ENVIRONMENT_VARIABLE: ${self:service}-env-${sls:stage}
+    NODE_ENV: dev
 
 package:
   exclude:
-    - web/**
-    - tests/**
     - .git/**
     - coverage/**
-    - .sonar/**
     - src/**
     - node_modules/@types/**
     - build/**/*.js.map
@@ -24,28 +25,28 @@ package:
 
 functions:
   add:
-    handler: build/src/functions/add/handler.add
+    handler: src/functions/add/handler.add
     events:
       - http:
           path: add
           method: post
           cors: true
   divide:
-    handler: build/src/functions/divide/handler.divide
+    handler: src/functions/divide/handler.divide
     events:
       - http:
           path: divide
           method: post
           cors: true
   multiply:
-    handler: build/src/functions/multiply/handler.multiply
+    handler: src/functions/multiply/handler.multiply
     events:
       - http:
           path: multiply
           method: post
           cors: true
   subtract:
-    handler: build/src/functions/subtract/handler.subtract
+    handler: src/functions/subtract/handler.subtract
     events:
       - http:
           path: subtract
@@ -54,3 +55,4 @@ functions:
           
 plugins:
   - serverless-offline
+  - serverless-plugin-typescript 

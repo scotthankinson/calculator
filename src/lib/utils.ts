@@ -1,7 +1,7 @@
 
 export function createResponseObject(statusCode: number, body: any): any {
     const response = {
-        statusCode: statusCode,
+        statusCode,
         headers: {
             "Access-Control-Allow-Origin": "*"
         },
@@ -14,13 +14,13 @@ export function createResponseObject(statusCode: number, body: any): any {
 
 export function tryParseJSON(jsonString: string): any {
     try {
-        let o = JSON.parse(jsonString);
+        const o = JSON.parse(jsonString);
 
         if (typeof o === "object") {
             return o;
         }
     }
-    catch (e) { }
+    catch (e) { console.log(e) }
 
     return false;
 };
