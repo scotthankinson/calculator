@@ -1,0 +1,545 @@
+Description: >
+
+  This template deploys a simple CodeCommit repository and wires together a build 
+  pipeline for the application with a single stage.  
+  It is expected that 'application.zip' will be uploaded to the root of StagingBucket
+  to initialize the CodeCommit repository for the master branch.  dev and qa branches
+  must be created manually after initializing.
+
+  
+Parameters:
+  AppName:
+    Description: An application name that will be prefixed to resource names.  This should match what was used to build the runner.
+    Type: String
+  StagingBucket:
+    Description: S3 bucket where templates and source code have been staged.
+    Type: String
+
+
+Resources:
+  #############################################
+  # Global Resources
+  #############################################
+  PipelineGitRepo:
+    Type: AWS::CodeCommit::Repository
+    Properties:
+      RepositoryName: !Sub ${AppName}-${AWS::StackName}
+      RepositoryDescription: Application repository containing demo logic
+      Code:
+        BranchName: master
+        S3: 
+          Bucket: !Ref StagingBucket
+          Key: 'application.zip'
+
+  CodeBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - codebuild.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      Description: Pull from source and deploy a sample SAM application
+      ManagedPolicyArns:
+        # SAM needs a lot of permissions -- recommend scoping this appropriately in a real environment
+        - 'arn:aws:iam::aws:policy/AdministratorAccess'
+      RoleName: !Sub ${AppName}-${AWS::StackName}-codebuild-role
+      Policies:
+        - PolicyName: "CodeBuildArtifactPull"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:GetObjectVersion
+                  - s3:GetBucketVersioning
+                  - s3:PutObject
+                Resource:
+                  - !Sub "arn:aws:s3:::${StagingBucket}"
+                  - !Sub "arn:aws:s3:::${StagingBucket}/*"
+        - PolicyName: "CodeBuildLogsRole"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource:
+                  - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/*"
+        - PolicyName: "CodeBuildSecretsRole"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - kms:GenerateDataKey*
+                  - kms:Encrypt
+                  - kms:Decrypt
+                Resource:
+                  - !Sub "arn:aws:kms:${AWS::Region}:${AWS::AccountId}:alias/aws/ssm"
+
+  CodePipelineRole:
+    Description: Orchestrate release flow for DevOps Pipeline
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action: sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service:
+            - codepipeline.amazonaws.com
+          Sid: 1
+      Path: /
+      Policies:
+      - PolicyDocument:
+          Statement:
+          - Action:
+            - s3:GetObject
+            - s3:GetObjectVersion
+            - s3:GetBucketVersioning
+            - s3:PutObject
+            Effect: Allow
+            Resource:
+            - !Sub "arn:aws:s3:::${StagingBucket}"
+            - !Sub "arn:aws:s3:::${StagingBucket}/*"
+          - Action:
+            - codecommit:CancelUploadArchive
+            - codecommit:GetBranch
+            - codecommit:GetCommit
+            - codecommit:GetUploadArchiveStatus
+            - codecommit:UploadArchive
+            Effect: Allow
+            Resource:
+            - !GetAtt 'PipelineGitRepo.Arn'
+          - Action:
+            - codebuild:StartBuild
+            - codebuild:BatchGetBuilds
+            - codebuild:StopBuild
+            Effect: Allow
+            Resource:
+            - !Sub "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/${AppName}-${AWS::StackName}*"
+          - Action:
+            - codedeploy:CreateDeployment
+            - codedeploy:GetApplicationRevision
+            - codedeploy:GetDeployment
+            - codedeploy:GetDeploymentConfig
+            - codedeploy:RegisterApplicationRevision
+            Effect: Allow
+            Resource: 
+              - !Sub 'arn:aws:codedeploy:${AWS::Region}:${AWS::AccountId}:deploymentgroup:${AWS::StackName}*'
+              - !Sub 'arn:aws:codedeploy:${AWS::Region}:${AWS::AccountId}:application:${AWS::StackName}*'
+              - !Sub 'arn:aws:codedeploy:${AWS::Region}:${AWS::AccountId}:deploymentconfig:${AWS::StackName}*'
+          - Action:
+            - cloudformation:DescribeStacks
+            - cloudformation:DescribeChangeSet
+            - cloudformation:CreateChangeSet
+            - cloudformation:DeleteChangeSet
+            - cloudformation:ExecuteChangeSet
+            Effect: Allow
+            Resource:
+              - !Sub 'arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${AWS::StackName}-*'
+        PolicyName: !Sub "${AWS::StackName}-code-pipeline-role-policy"
+      RoleName: !Sub "${AWS::StackName}-code-pipeline-role"
+    Type: AWS::IAM::Role
+
+  CloudWatchEventRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - events.amazonaws.com
+            Action: 'sts:AssumeRole'
+      RoleName: !Sub "${AppName}-${AWS::StackName}-cloudwatch-event-role"
+      Path: /
+      Policies:
+        - PolicyName: cwe-pipeline-execution
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: 'codepipeline:StartPipelineExecution'
+                Resource: !Sub "arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${AppName}*"
+
+  #############################################
+  # dev Resources
+  #############################################
+  
+  DevExampleParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub "/dev/${AWS::StackName}/EXAMPLE"
+      Type: String
+      Value: "an example of a DEV parameter"
+      Description: An example of environment variable reference to Parameter Store from CodeBuild
+      Tags:
+        Environment: DEV
+
+  DevCodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    DependsOn:
+      - PipelineGitRepo
+      - CodeBuildRole
+      - DevExampleParameter
+    Properties:
+      Artifacts:
+        Type: NO_ARTIFACTS
+      ConcurrentBuildLimit: 1
+      Description: 'DEV: Pull from source and release changes to the sample application'
+      Environment:
+        ComputeType: 'BUILD_GENERAL1_MEDIUM'
+        EnvironmentVariables:
+          - Name: LIFECYCLE
+            Value: 'dev'
+            Type: 'PLAINTEXT'
+          - Name: EXAMPLE
+            Value: !Sub '/dev/${AWS::StackName}/EXAMPLE'
+            Type: PARAMETER_STORE
+          - Name: AWS_ACCESS_KEY_ID
+            Value: !Sub '/dev/${AppName}/AWS_ACCESS_KEY_ID'
+            Type: PARAMETER_STORE
+          - Name: AWS_SECRET_ACCESS_KEY
+            Value: !Sub '/dev/${AppName}/AWS_SECRET_ACCESS_KEY'
+            Type: PARAMETER_STORE
+        Image: 
+          Fn::ImportValue: 
+            Fn::Sub: "${AppName}-RunnerCodeBuildImage"
+        PrivilegedMode: true
+        Type: "LINUX_CONTAINER"
+      Name: !Sub '${AppName}-${AWS::StackName}-dev'
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Source:
+        Type: "CODECOMMIT"
+        Location: !Sub 'https://git-codecommit.${AWS::Region}.amazonaws.com/v1/repos/${AppName}-${AWS::StackName}'
+      SourceVersion: 'refs/heads/dev'
+
+  DevReleasePipeline:
+    Type: 'AWS::CodePipeline::Pipeline'
+    DependsOn:
+      - CodePipelineRole
+      - DevCodeBuildProject
+    Properties:
+      Name: !Sub '${AppName}-${AWS::StackName}-dev'
+      RoleArn: !GetAtt 
+        - CodePipelineRole
+        - Arn
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: SourceAction
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Version: 1
+                Provider: CodeCommit
+              OutputArtifacts:
+                - Name: SourceOutput
+              Configuration:
+                BranchName: dev
+                RepositoryName: !Sub '${AppName}-${AWS::StackName}'
+                PollForSourceChanges: false
+              RunOrder: 1
+        - Name: Build
+          Actions:
+            - Name: BuildAction
+              InputArtifacts:
+                - Name: SourceOutput
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Sub '${AppName}-${AWS::StackName}-dev'
+              RunOrder: 1
+      ArtifactStore:
+        Type: S3
+        Location: !Ref StagingBucket
+
+  DevCommitRule:
+    Type: 'AWS::Events::Rule'
+    DependsOn: 
+      - DevReleasePipeline
+      - CloudWatchEventRole
+    Properties:
+      Name: !Sub "${AppName}-${AWS::StackName}-dev-commit-rule"
+      EventPattern:
+        source:
+          - aws.codecommit
+        detail-type:
+          - CodeCommit Repository State Change
+        resources:
+          - !GetAtt 'PipelineGitRepo.Arn'
+        detail:
+          event:
+            - referenceCreated
+            - referenceUpdated
+          referenceType:
+            - branch
+          referenceName:
+            - dev
+      Targets:
+        - Arn: !Sub 'arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${AppName}-${AWS::StackName}-dev'
+          RoleArn: !GetAtt 
+            - CloudWatchEventRole
+            - Arn
+          Id: !Sub "${AppName}-${AWS::StackName}-dev-commit-rule"
+
+  #############################################
+  # qa Resources
+  #############################################
+  
+  QAExampleParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub "/qa/${AWS::StackName}/EXAMPLE"
+      Type: String
+      Value: "an example of a QA parameter"
+      Description: The default manifest to execute when executing the script.
+      Tags:
+        Environment: QA
+
+  QACodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    DependsOn:
+      - PipelineGitRepo
+      - CodeBuildRole
+      - QAExampleParameter
+    Properties:
+      Artifacts:
+        Type: NO_ARTIFACTS
+      ConcurrentBuildLimit: 1
+      Description: 'QA: Pull from source and release changes to the sample application'
+      Environment:
+        ComputeType: 'BUILD_GENERAL1_MEDIUM'
+        EnvironmentVariables:
+          - Name: LIFECYCLE
+            Value: 'qa'
+            Type: 'PLAINTEXT'
+          - Name: EXAMPLE
+            Value: !Sub '/qa/${AWS::StackName}/EXAMPLE'
+            Type: PARAMETER_STORE
+          - Name: AWS_ACCESS_KEY_ID
+            Value: !Sub '/qa/${AppName}/AWS_ACCESS_KEY_ID'
+            Type: PARAMETER_STORE
+          - Name: AWS_SECRET_ACCESS_KEY
+            Value: !Sub '/qa/${AppName}/AWS_SECRET_ACCESS_KEY'
+            Type: PARAMETER_STORE
+        Image: 
+          Fn::ImportValue: 
+            Fn::Sub: "${AppName}-RunnerCodeBuildImage"
+        PrivilegedMode: true
+        Type: "LINUX_CONTAINER"
+      Name: !Sub '${AppName}-${AWS::StackName}-qa'
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Source:
+        Type: "CODECOMMIT"
+        Location: !Sub 'https://git-codecommit.${AWS::Region}.amazonaws.com/v1/repos/${AppName}-${AWS::StackName}'
+      SourceVersion: 'refs/heads/qa'
+
+  QAReleasePipeline:
+    Type: 'AWS::CodePipeline::Pipeline'
+    DependsOn:
+      - CodePipelineRole
+      - QACodeBuildProject
+    Properties:
+      Name: !Sub '${AppName}-${AWS::StackName}-qa'
+      RoleArn: !GetAtt 
+        - CodePipelineRole
+        - Arn
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: SourceAction
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Version: 1
+                Provider: CodeCommit
+              OutputArtifacts:
+                - Name: SourceOutput
+              Configuration:
+                BranchName: qa
+                RepositoryName: !Sub '${AppName}-${AWS::StackName}'
+                PollForSourceChanges: false
+              RunOrder: 1
+        - Name: Build
+          Actions:
+            - Name: BuildAction
+              InputArtifacts:
+                - Name: SourceOutput
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Sub '${AppName}-${AWS::StackName}-qa'
+              RunOrder: 1
+      ArtifactStore:
+        Type: S3
+        Location: !Ref StagingBucket
+
+  QACommitRule:
+    Type: 'AWS::Events::Rule'
+    DependsOn: 
+      - QAReleasePipeline
+      - CloudWatchEventRole
+    Properties:
+      Name: !Sub "${AppName}-${AWS::StackName}-qa-commit-rule"
+      EventPattern:
+        source:
+          - aws.codecommit
+        detail-type:
+          - CodeCommit Repository State Change
+        resources:
+          - !GetAtt 'PipelineGitRepo.Arn'
+        detail:
+          event:
+            - referenceCreated
+            - referenceUpdated
+          referenceType:
+            - branch
+          referenceName:
+            - qa
+      Targets:
+        - Arn: !Sub 'arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${AppName}-${AWS::StackName}-qa'
+          RoleArn: !GetAtt 
+            - CloudWatchEventRole
+            - Arn
+          Id: !Sub "${AppName}-${AWS::StackName}-qa-commit-rule"
+
+
+  #############################################
+  # prd Resources - for a manual release process, do not include Commit Trigger
+  #############################################
+  
+  PRDExampleParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub "/prd/${AWS::StackName}/EXAMPLE"
+      Type: String
+      Value: "an example of a PRD parameter"
+      Description: The default manifest to execute when executing the script.
+      Tags:
+        Environment: PRD
+
+  PRDCodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    DependsOn:
+      - PipelineGitRepo
+      - CodeBuildRole
+      - PRDExampleParameter
+    Properties:
+      Artifacts:
+        Type: NO_ARTIFACTS
+      ConcurrentBuildLimit: 1
+      Description: 'PRD: Pull from source and release changes to the sample application'
+      Environment:
+        ComputeType: 'BUILD_GENERAL1_MEDIUM'
+        EnvironmentVariables:
+          - Name: LIFECYCLE
+            Value: 'prd'
+            Type: 'PLAINTEXT'
+          - Name: EXAMPLE
+            Value: !Sub '/prd/${AWS::StackName}/EXAMPLE'
+            Type: PARAMETER_STORE
+          - Name: AWS_ACCESS_KEY_ID
+            Value: !Sub '/prd/${AppName}/AWS_ACCESS_KEY_ID'
+            Type: PARAMETER_STORE
+          - Name: AWS_SECRET_ACCESS_KEY
+            Value: !Sub '/prd/${AppName}/AWS_SECRET_ACCESS_KEY'
+            Type: PARAMETER_STORE
+        Image: 
+          Fn::ImportValue: 
+            Fn::Sub: "${AppName}-RunnerCodeBuildImage"
+        PrivilegedMode: true
+        Type: "LINUX_CONTAINER"
+      Name: !Sub '${AppName}-${AWS::StackName}-prd'
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Source:
+        Type: "CODECOMMIT"
+        Location: !Sub 'https://git-codecommit.${AWS::Region}.amazonaws.com/v1/repos/${AppName}-${AWS::StackName}'
+      SourceVersion: 'refs/heads/master'
+
+  PRDReleasePipeline:
+    Type: 'AWS::CodePipeline::Pipeline'
+    DependsOn:
+      - CodePipelineRole
+      - PRDCodeBuildProject
+    Properties:
+      Name: !Sub '${AppName}-${AWS::StackName}-prd'
+      RoleArn: !GetAtt 
+        - CodePipelineRole
+        - Arn
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: SourceAction
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Version: 1
+                Provider: CodeCommit
+              OutputArtifacts:
+                - Name: SourceOutput
+              Configuration:
+                BranchName: master
+                RepositoryName: !Sub '${AppName}-${AWS::StackName}'
+                PollForSourceChanges: false
+              RunOrder: 1
+        - Name: Build
+          Actions:
+            - Name: BuildAction
+              InputArtifacts:
+                - Name: SourceOutput
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Sub '${AppName}-${AWS::StackName}-prd'
+              RunOrder: 1
+      ArtifactStore:
+        Type: S3
+        Location: !Ref StagingBucket
+
+  PRDCommitRule:
+    Type: 'AWS::Events::Rule'
+    DependsOn: 
+      - PRDReleasePipeline
+      - CloudWatchEventRole
+    Properties:
+      Name: !Sub "${AppName}-${AWS::StackName}-prd-commit-rule"
+      EventPattern:
+        source:
+          - aws.codecommit
+        detail-type:
+          - CodeCommit Repository State Change
+        resources:
+          - !GetAtt 'PipelineGitRepo.Arn'
+        detail:
+          event:
+            - referenceCreated
+            - referenceUpdated
+          referenceType:
+            - branch
+          referenceName:
+            - master
+      Targets:
+        - Arn: !Sub 'arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${AppName}-${AWS::StackName}-prd'
+          RoleArn: !GetAtt 
+            - CloudWatchEventRole
+            - Arn
+          Id: !Sub "${AppName}-${AWS::StackName}-prd-commit-rule"

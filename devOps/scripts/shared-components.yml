@@ -1,0 +1,260 @@
+Description: >
+
+  This template deploys an ECR registry, CodeCommit Repository, and CodeBuild
+  job to create and save a Codebuild Runner used by other jobs.  It will 
+  export the runner path.  It will also create reusable IAM roles which govern 
+  CodeCommit usage matching the given AppName.
+  It is expected that 'runner.zip' will be uploaded to the root of StagingBucket
+  to initialize the CodeCommit repository.
+
+Parameters:
+  AppName:
+    Description: An application name that will be prefixed to resource names
+    Type: String
+  StagingBucket:
+    Description: S3 bucket where templates and source code have been staged
+    Type: String
+
+Resources:
+  RunnerGitRepo:
+    Type: AWS::CodeCommit::Repository
+    Properties:
+      RepositoryName: !Sub ${AppName}-codebuild-runner
+      RepositoryDescription: An example of a DevOps pipeline which executes script against various environments
+      Code:
+        BranchName: master
+        S3: 
+          Bucket: !Ref StagingBucket
+          Key: 'runner.zip'
+
+  RunnerDockerRepo:
+    Type: AWS::ECR::Repository
+    Properties: 
+      ImageTagMutability: MUTABLE
+      RepositoryName: !Sub ${AppName}-codebuild-runner
+      RepositoryPolicyText: 
+        Version: "2012-10-17"
+        Statement: 
+          - 
+            Sid: CodeBuildAccessPrincipal
+            Effect: Allow
+            Principal: 
+              Service: codebuild.amazonaws.com
+            Action: 
+              - "ecr:GetDownloadUrlForLayer"
+              - "ecr:BatchGetImage"
+              - "ecr:BatchCheckLayerAvailability"
+
+  RunnerCodeBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - codebuild.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      Description: Pull from source and package base image for custom CodeBuild runner.
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AWSCodeCommitReadOnly'
+      RoleName: !Sub ${AppName}-codebuild-runner-role
+      Policies:
+        - PolicyName: "PushImageToEcr"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ecr:BatchGetImage
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:CompleteLayerUpload
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:InitiateLayerUpload
+                  - ecr:PutImage
+                  - ecr:UploadLayerPart
+                  - ecr:GetAuthorizationToken
+                Resource: "*"
+        - PolicyName: "CodeBuildLogsRole"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource:
+                  - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/*"
+
+  RunnerCodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    DependsOn:
+      - RunnerGitRepo
+      - RunnerCodeBuildRole
+    Properties:
+      Artifacts:
+        Type: NO_ARTIFACTS
+      ConcurrentBuildLimit: 1
+      Description: "Build and push Dockerfile loaded with supporting tools for use as custom CodeBuild runner."
+      Environment:
+        ComputeType: 'BUILD_GENERAL1_MEDIUM'
+        EnvironmentVariables:
+          - Name: AWS_DEFAULT_REGION
+            Value: !Ref AWS::Region
+          - Name: AWS_ACCOUNT_ID
+            Value: !Ref "AWS::AccountId"
+          - Name: AWS_ECR_REPOSITORY_URI
+            Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${RunnerDockerRepo}
+          - Name: IMAGE_REPO_NAME
+            Value: !Ref RunnerDockerRepo
+          - Name: IMAGE_TAG
+            Value: "latest"
+        Image: "aws/codebuild/amazonlinux2-x86_64-standard:3.0"
+        PrivilegedMode: true
+        Type: "LINUX_CONTAINER"
+      Name: !Sub ${AppName}-codebuild-runner
+      ServiceRole: !GetAtt RunnerCodeBuildRole.Arn
+      Source:
+        Type: "CODECOMMIT"
+        Location: !Sub "https://git-codecommit.${AWS::Region}.amazonaws.com/v1/repos/${AppName}-codebuild-runner"
+      SourceVersion: 'refs/heads/master'
+
+  CodeCommitProtectedBranchPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Description: A policy which prevents deletion of protected branches (master/qa/dev)
+      ManagedPolicyName: !Sub "${AppName}-branch-protection-policy"
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Deny
+            Action:
+              - codecommit:DeleteBranch
+            Resource:
+              - !Sub "arn:aws:codecommit:${AWS::Region}:${AWS::AccountId}:${AppName}*"
+            Condition:
+              StringEqualsIfExists:
+                "codecommit:References": 
+                  - "refs/heads/master"
+                  - "refs/heads/qa"
+                  - "refs/heads/dev"
+
+  CodeCommitProtectedCommitPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Description: A policy which prevents commits directly to protected branches (master/qa), manual codebuild executions, and manual pipeline executions.
+      ManagedPolicyName: !Sub "${AppName}-commit-protection-policy"
+      PolicyDocument:                
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Deny
+            Action:
+              - codecommit:GitPush
+              - codecommit:PutFile
+              - codecommit:MergePullRequestByFastForward
+            Resource:
+              - !Sub "arn:aws:codecommit:${AWS::Region}:${AWS::AccountId}:${AppName}*"
+            Condition:
+                StringEqualsIfExists:
+                  "codecommit:References": 
+                    - "refs/heads/master"
+                    - "refs/heads/qa"
+          - Effect: Deny
+            Action:
+              - codebuild:Startbuild
+            Resource:
+              - !Sub "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/${AppName}*"
+          - Effect: Deny
+            Action:
+              - codepipeline:PutApprovalResult
+              - codepipeline:StartPipelineExecution
+              - codepipeline:StopPipelineExecution
+            Resource:
+              - !Sub "arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${AppName}*"
+
+
+
+########################################
+#          Shared Parameters           #
+########################################
+
+  DevAWSAccessKeyId:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub "/dev/${AppName}/AWS_ACCESS_KEY_ID"
+      Type: String
+      Value: REPLACE_ME_WITH_SECURE_STRING
+      Description: An dev deployment key (or better yet, use a role!)
+      Tags:
+        Environment: DEV
+
+  DevAWSSecretAccessKey:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub "/dev/${AppName}/AWS_SECRET_ACCESS_KEY"
+      Type: String
+      Value: REPLACE_ME_WITH_SECURE_STRING
+      Description: An dev deployment key (or better yet, use a role!)
+      Tags:
+        Environment: DEV
+
+  QAAWSAccessKeyId:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub "/qa/${AppName}/AWS_ACCESS_KEY_ID"
+      Type: String
+      Value: REPLACE_ME_WITH_SECURE_STRING
+      Description: A qa deployment key (or better yet, use a role!)
+      Tags:
+        Environment: QA
+
+  QAAWSSecretAccessKey:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub "/qa/${AppName}/AWS_SECRET_ACCESS_KEY"
+      Type: String
+      Value: REPLACE_ME_WITH_SECURE_STRING
+      Description: An qa deployment key (or better yet, use a role!)
+      Tags:
+        Environment: QA
+
+  PrdAWSAccessKeyId:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub "/prd/${AppName}/AWS_ACCESS_KEY_ID"
+      Type: String
+      Value: REPLACE_ME_WITH_SECURE_STRING
+      Description: A prod deployment key (or better yet, use a role!)
+      Tags:
+        Environment: PRD
+
+  PrdAWSSecretAccessKey:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub "/prd/${AppName}/AWS_SECRET_ACCESS_KEY"
+      Type: String
+      Value: REPLACE_ME_WITH_SECURE_STRING
+      Description: An prod deployment key (or better yet, use a role!)
+      Tags:
+        Environment: PRD
+
+
+Outputs:
+  CodeCommitProtectedBranchPolicy:
+    Description: A policy which prevents deletion of protected branches (master/qa/dev)
+    Value:  !Ref CodeCommitProtectedBranchPolicy
+    Export:
+      Name: !Sub ${AppName}-CodeCommitProtectedBranchPolicy
+  CodeCommitProtectedCommitPolicy:
+    Description: A policy which prevents commits directly to protected branches (master/qa), manual codebuild executions, and manual pipeline executions.
+    Value:  !Ref CodeCommitProtectedCommitPolicy
+    Export:
+      Name: !Sub ${AppName}-CodeCommitProtectedCommitPolicy
+  RunnerCodeBuildImage:
+    Description: The image to use when executing deployment jobs
+    Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${RunnerDockerRepo}:latest
+    Export:
+      Name: !Sub ${AppName}-RunnerCodeBuildImage

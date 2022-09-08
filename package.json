@@ -10,16 +10,13 @@
   "license": "MIT",
   "main": "",
   "scripts": {
-    "clean": "rm -rf .nyc_output .serverless .webpack coverage testreports build package-lock.json node-modules",
+    "clean": "rm -rf .nyc_output .serverless coverage package-lock.json node-modules",
     "lint": "tslint -p tsconfig.json -c tslint.json",
     "start": "serverless offline",
     "deploy": "serverless deploy",
+    "deploy-web": "aws s3 sync --delete web/ s3://calculator-demo",
     "test": "mocha -r ts-node/register \"test/**/*.spec.ts\" --exit",
-    "coverage": "nyc npm run test",
-    "coverage-report": "nyc --reporter lcov npm run test"
-  },
-  "dependencies": {
-    "dotenv": "^8.2.0"
+    "coverage": "nyc --reporter=lcov --reporter=text --reporter=cobertura npm run test"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.51",
@@ -34,6 +31,7 @@
     "mocha": "^7.1.2",
     "nyc": "^15.0.1",
     "serverless-offline": "^5.12.1",
+    "serverless-plugin-lambda-insights": "^1.6.0",
     "serverless-plugin-typescript": "^1.1.9",
     "sinon": "^9.0.2",
     "ts-node": "^8.9.1",

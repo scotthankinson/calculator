@@ -1,0 +1,19 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo Beginning CODEBUILD-DEMO build job for DevOps Pipeline
+  build:
+    commands:
+      - chmod +x entry_script.sh && ./entry_script.sh
+  post_build:
+    commands:
+      - echo Build completed on `date`
+
+reports:
+  codeCoverageReport:
+    files: 
+      - coverage/cobertura-coverage.xml
+    file-format: COBERTURAXML
+  

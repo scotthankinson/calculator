@@ -8,20 +8,24 @@ provider:
     CUSTOM_ENVIRONMENT_VARIABLE: ${self:service}-env-${sls:stage}
     NODE_ENV: dev
 
+custom:
+  lambdaInsights:
+    defaultLambdaInsights: true #enables Lambda Insights for all functions
+
 package:
   exclude:
     - .git/**
+    - .nyc_output/**
     - coverage/**
-    - src/**
-    - node_modules/@types/**
-    - build/**/*.js.map
-    - build/test/**
-    - tsconfig.json
-    - .env
+    - devops/**
+    - web/**
     - .gitignore
     - .npmignore
+    - .nycrc.json
     - event.json
     - README.md
+    - tsconfig.json
+    
 
 functions:
   add:
@@ -56,3 +60,182 @@ functions:
 plugins:
   - serverless-offline
   - serverless-plugin-typescript 
+  - serverless-plugin-lambda-insights
+
+resources:
+  Resources:
+    # Canaries
+    CloudWatchSyntheticsRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName:
+          Fn::Sub: calculator-${sls:stage}-cwSyntheticsRole
+        Description: CloudWatch Synthetics lambda execution role for running canaries
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service: lambda.amazonaws.com
+              Action: sts:AssumeRole
+              Condition: {}
+
+    RolePermissions:
+      Type: AWS::IAM::Policy
+      Properties:
+        Roles:
+          - Ref: CloudWatchSyntheticsRole
+        PolicyName:
+          Fn::Sub: CloudWatchSyntheticsPolicy-calculator-${sls:stage}
+        PolicyDocument:
+          Version:  "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action:
+                - s3:PutObject
+                - s3:GetBucketLocation
+              Resource:
+                - Fn::Sub: arn:aws:s3:::${ResultsBucket}/*
+            - Effect: Allow
+              Action:
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+                - logs:CreateLogGroup
+              Resource:
+                - Fn::Sub: arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/cwsyn-test-*
+            - Effect: Allow
+              Action:
+                - s3:ListAllMyBuckets
+              Resource: '*'
+            - Effect: Allow
+              Resource: '*'
+              Action: cloudwatch:PutMetricData
+              Condition:
+                StringEquals:
+                  cloudwatch:namespace: CloudWatchSynthetics
+
+    ResultsBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName:
+          Fn::Sub: calculator-cw-syn-results-${sls:stage}
+        BucketEncryption:
+          ServerSideEncryptionConfiguration:
+            - ServerSideEncryptionByDefault:
+                SSEAlgorithm: AES256
+
+    AddCanary:
+      Type: AWS::Synthetics::Canary
+      Properties: 
+        Name: add-${sls:stage}-canary
+        Code:
+          Handler: exports.handler
+          Script: |
+            const https = require('https');
+            
+            const postData = JSON.stringify({
+              "a": 1,
+              "b": 2
+            });
+            const options = {
+              host: process.env.TARGET_URL,
+              port: 443,
+              path: process.env.TARGET_PATH,
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Content-Length': postData.length
+              }
+            };
+            
+            exports.handler = async function(event) {
+              const promise = new Promise(function(resolve, reject) {
+                const req = https.request(options, (res) => {
+                    resolve(res.statusCode)
+                  }).on('error', (e) => {
+                    reject(e.message)
+                  });
+                req.write(postData);
+                req.end();
+                });
+              return promise;
+            }
+        ExecutionRoleArn:
+          Fn::GetAtt:
+            - CloudWatchSyntheticsRole
+            - Arn
+        RuntimeVersion: syn-nodejs-puppeteer-3.6
+        RunConfig:
+          TimeoutInSeconds: 60
+          EnvironmentVariables: 
+            TARGET_URL: !Sub "api-${sls:stage}.slalom-serverless-demo.com"
+            TARGET_PATH: "/calculator/add"
+        ArtifactS3Location:
+          Fn::Join:
+            - ''
+            - - s3://
+              - Ref: ResultsBucket
+        StartCanaryAfterCreation: True
+        Schedule:
+          Expression: rate(2 minutes) # every 5 minutes
+          DurationInSeconds: 0 # run indefinitely
+        SuccessRetentionPeriod: 90
+        FailureRetentionPeriod: 180
+
+    SubtractCanary:
+      Type: AWS::Synthetics::Canary
+      Properties: 
+        Name: sub-${sls:stage}-canary
+        Code:
+          Handler: exports.handler
+          Script: |
+            const https = require('https');
+            
+            const postData = JSON.stringify({
+              "a": 1,
+              "b": 2
+            });
+            const options = {
+              host: process.env.TARGET_URL,
+              port: 443,
+              path: process.env.TARGET_PATH,
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Content-Length': postData.length
+              }
+            };
+            
+            exports.handler = async function(event) {
+              const promise = new Promise(function(resolve, reject) {
+                const req = https.request(options, (res) => {
+                    resolve(res.statusCode)
+                  }).on('error', (e) => {
+                    reject(e.message)
+                  });
+                req.write(postData);
+                req.end();
+                });
+              return promise;
+            }
+        ExecutionRoleArn:
+          Fn::GetAtt:
+            - CloudWatchSyntheticsRole
+            - Arn
+        RuntimeVersion: syn-nodejs-puppeteer-3.6
+        RunConfig:
+          TimeoutInSeconds: 60
+          EnvironmentVariables: 
+            TARGET_URL: !Sub "api-${sls:stage}.slalom-serverless-demo.com"
+            TARGET_PATH: "/calculator/subtract"
+        ArtifactS3Location:
+          Fn::Join:
+            - ''
+            - - s3://
+              - Ref: ResultsBucket
+        StartCanaryAfterCreation: True
+        Schedule:
+          Expression: rate(2 minutes) # every 5 minutes
+          DurationInSeconds: 0 # run indefinitely
+        SuccessRetentionPeriod: 90
+        FailureRetentionPeriod: 180
