@@ -30,7 +30,7 @@
     "chai": "^4.2.0",
     "mocha": "^7.1.2",
     "nyc": "^15.0.1",
-    "serverless-offline": "^5.12.1",
+    "serverless-offline": "^12.0.3",
     "serverless-plugin-lambda-insights": "^1.6.0",
     "serverless-plugin-typescript": "^1.1.9",
     "sinon": "^9.0.2",
