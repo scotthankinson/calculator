@@ -28,7 +28,7 @@
     "@types/sinon": "^9.0.0",
     "@types/supertest": "^2.0.8",
     "chai": "^4.2.0",
-    "mocha": "^7.1.2",
+    "mocha": "^10.2.0",
     "nyc": "^15.0.1",
     "serverless-offline": "^5.12.1",
     "serverless-plugin-lambda-insights": "^1.6.0",
