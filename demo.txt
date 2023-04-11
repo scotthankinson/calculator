@@ -1,0 +1,19 @@
+Opening:
+    High level backstory on GSU's modernization journey
+
+Demo: 
+    Quick tour of the already-set-up components
+        Route53, Cloudfront, API-GW Custom Domain Names, S3 websites/staging
+        Calculon (not working)
+    Initializing and deploying the sample application pipelines
+        Source code staged in calculator-demo-staging-files
+        shared-components - CodeBuild to initialize the runner
+        api AFTER codebuild finishes
+    Deploying the sample application with those pipelines
+        generate dev and qa branches
+        API Gateway mappings
+        Calculon (working), show network console
+    Tour of some extra features of the deployment (API-GW Custom Domain Names, Lambda Insights, Canaries)
+        API-GW Custom Domain Name mapping
+        Lambda Insights
+        Canaries (fix PRD)
