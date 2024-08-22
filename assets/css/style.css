@@ -1,5 +1,5 @@
 #calculator-title {
-    font-size: 24px; /* Adjust font size as needed to match other headings */
+    font-size: var(--heading-font-size); /* Use CSS variable for dynamic sizing */
     text-align: center;
     margin-top: 20px;
 }
