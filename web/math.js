@@ -184,3 +184,4 @@ function process(canvas, func) {
 
     ctx.putImageData(imageData, 0, 0);
 }
+console.log('Current title:', document.getElementById('calculator-title').innerText);
